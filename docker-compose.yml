@@ -1,0 +1,46 @@
+version: "3"
+services:
+  keepalived_master:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./index-master.html:/var/www/html/index.html
+      - ./keepalived-master.conf:/etc/keepalived/keepalived.conf
+    ports:
+      - target: 80
+        published: 8880
+    networks:
+      static-network:
+        ipv4_address: 172.20.128.2
+    cap_add: 
+      - NET_ADMIN
+  keepalived_backup:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./index-backup.html:/var/www/html/index.html
+      - ./keepalived-backup.conf:/etc/keepalived/keepalived.conf
+    ports:
+      - target: 80
+        published: 8881
+    networks:
+      static-network:
+        ipv4_address: 172.20.128.3
+    cap_add: 
+        - NET_ADMIN
+  proxy:
+    image: haproxy:1.7-alpine
+    ports:
+      - 8000:6301
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    networks:
+      - static-network
+
+networks:
+  static-network:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
